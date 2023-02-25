@@ -32,15 +32,6 @@ jobs:
           token: b128d3d6-eead-4eb7-ab4c-afcd429adc29
           file: build/reports/jacoco/report.xml
 
-      - name: Deploy to Heroku
-        uses: akhileshns/heroku-deploy@v3.12.12
-        with:
-          # TODO прописать свой API_KEY из heroku #REALIZED
-          heroku_api_key: f7ea77fd-6a3f-419b-8a89-418de61d6af3
-          heroku_app_name: homework3-app
-          heroku_email: romanowalex@mail.ru
-          usedocker: true
-
       - name: Run API Tests
         id: run-newman
         uses: anthonyvscode/newman-action@v1
