@@ -71,7 +71,6 @@ class PersonControllerTest {
                 .andExpect(jsonPath("$.fullName").value(person.getFullName()))
                 .andExpect(jsonPath("$.age").value(person.getAge()))
         ;
-
     }
 
     @Test
@@ -116,9 +115,7 @@ class PersonControllerTest {
 
     @Test
     void deletePerson() throws Exception {
-
         mockMvc.perform(delete(URL+TESTID))
                 .andExpect(status().is(204));
-
     }
 }
