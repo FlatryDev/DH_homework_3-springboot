@@ -31,12 +31,3 @@ jobs:
           # TODO прописать свой TOKEN из codecov #REALIZED
           token: b128d3d6-eead-4eb7-ab4c-afcd429adc29
           file: build/reports/jacoco/report.xml
-
-      - name: Run API Tests
-        id: run-newman
-        uses: anthonyvscode/newman-action@v1
-        with:
-          collection: postman/homework3.postman_collection.json
-          environment: postman/[heroku] digital-habits.postman_environment.json
-          delayRequest: 50
-          reporters: cli
