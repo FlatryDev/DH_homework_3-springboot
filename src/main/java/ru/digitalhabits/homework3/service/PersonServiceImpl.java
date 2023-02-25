@@ -1,74 +1,109 @@
 package ru.digitalhabits.homework3.service;
 
 import lombok.RequiredArgsConstructor;
-import org.apache.commons.lang3.NotImplementedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.digitalhabits.homework3.dao.DepartmentDao;
+import ru.digitalhabits.homework3.dao.PersonDao;
+import ru.digitalhabits.homework3.domain.Department;
+import ru.digitalhabits.homework3.domain.Person;
 import ru.digitalhabits.homework3.model.PersonFullResponse;
 import ru.digitalhabits.homework3.model.PersonRequest;
 import ru.digitalhabits.homework3.model.PersonShortResponse;
 
 import javax.annotation.Nonnull;
+import javax.persistence.EntityNotFoundException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class PersonServiceImpl
         implements PersonService {
 
+    private final PersonDao personDao;
+    private final DepartmentDao departmentDao;
+    private final DepartmentService departmentService;
+
     @Nonnull
     @Override
     @Transactional(readOnly = true)
     public List<PersonShortResponse> findAll() {
-        // TODO: NotImplemented: получение информации о всех людях во всех отделах
-        throw new NotImplementedException();
+        return personDao.findAll().stream()
+                .map(person -> new PersonShortResponse().getFromPerson(person))
+                .collect(Collectors.toList());
     }
 
     @Nonnull
     @Override
     @Transactional(readOnly = true)
     public PersonFullResponse getById(int id) {
-        // TODO: NotImplemented: получение информации о человеке. Если не найдено, отдавать 404:NotFound
-        throw new NotImplementedException();
+        return new PersonFullResponse().getFromPerson(getPerson(id));
     }
 
     @Override
     @Transactional
     public int create(@Nonnull PersonRequest request) {
-        // TODO: NotImplemented: создание новой записи о человеке
-        throw new NotImplementedException();
+        return personDao
+                .update(request.getPerson())
+                .getId();
     }
 
     @Nonnull
     @Override
     @Transactional
     public PersonFullResponse update(int id, @Nonnull PersonRequest request) {
-        // TODO: NotImplemented: обновление информации о человеке. Если не найдено, отдавать 404:NotFound
-        throw new NotImplementedException();
+        return new PersonFullResponse().getFromPerson(
+                        personDao.update(
+                                request.getAsPerson(getPerson(id))
+                        )
+                    );
     }
 
     @Override
     @Transactional
     public void delete(int id) {
-        // TODO: NotImplemented: удаление информации о человеке и удаление его из отдела. Если не найдено, ничего не делать
-        throw new NotImplementedException();
+        personDao.delete(id);
     }
 
 
     @Override
     @Transactional
     public void addPersonToDepartment(int departmentId, int personId) {
-        // TODO: NotImplemented: добавление нового человека в департамент.
-        //  Если не найден человек или департамент, отдавать 404:NotFound.
-        //  Если департамент закрыт, то отдавать 409:Conflict
-        throw new NotImplementedException();
+        Department department = departmentService.getDepartment(departmentId);
+        if (department.isClosed()) throw new IllegalStateException("Department with id="+departmentId+" is closed");
+        Person person = getPerson(personId);
+        person.setDepartment(department);
+        personDao.update(person);
+
+        List<Person> personList = Optional
+                                        .ofNullable(department.getPersons())
+                                        .orElse(new ArrayList<>());
+        personList.add(person);
+        department.setPersons(personList);
+        departmentDao.update(department);
     }
 
     @Override
     @Transactional
     public void removePersonFromDepartment(int departmentId, int personId) {
-        // TODO: NotImplemented: удаление человека из департамента.
-        //  Если департамент не найден, отдавать 404:NotFound, если не найден человек в департаменте, то ничего не делать
-        throw new NotImplementedException();
+        Department department = departmentService.getDepartment(departmentId);
+        Person person = personDao.findById(personId);
+        if (person != null && department.getPersons().contains(person)) {
+            person.setDepartment(null);
+            personDao.update(person);
+            department.getPersons().remove(person);
+            departmentDao.update(department);
+        }
+    }
+
+    @Override
+    @Transactional
+    public Person getPerson(int id) {
+        return Optional
+                .ofNullable(personDao.findById(id))
+                .orElseThrow(() -> new EntityNotFoundException("Cannot find user by id = " + id));
     }
 }
